@@ -32,12 +32,23 @@ async def on_message(message): #Scans messages sent by users for banned words an
         return
     
     words = re.sub(r"[^a-zA-Z0-9\s]", "", message.content.lower()).split(" ")
-    
+    print(words)
     for word in words:
         if word in bannedWords:
-            await message.channel.send(f'erm "{word}" is a bad word, you cant say that.')
+            await message.channel.send(f'Erm "{word}" is a bad word, you cant say that.')
+            await shameUser(message)
     await bot.process_commands(message) #Allows bot to process commands still
 
+async def shameUser(message):
+    member = message.author
+    badUser[f"{member}"] = message.content
+    try: 
+        await member.edit(nick="Rude Man")
+        await message.channel.send(f'From {message.author}: "{message.content}"\nYour name is now Rude Man.')
+    except discord.Forbidden:
+        await message.channel.send("Do not have permission to change user nickname.")
+    except discord.HTTPException:
+        await message.channel.send("Changing nickname failed.")
     
 #Defines the commands for the bot, Learned from ChatGpt
 @bot.command()
