@@ -19,15 +19,16 @@ bot = commands.Bot(command_prefix='$', intents=intents)
 bannedWords = ['hi', 'what', 'guh',]
 
 #dictionary of misbehaving users and their offenses
-badUser = {}
+badUsers = {}
 
-#Defines the bots functions in response to events
+#Prints a message after the bot successfully connects to Discord, Learned from ChatGpt
 @bot.event
-async def onReady(): #Prints a message after the bot successfully connects to Discord, Learned from ChatGpt
+async def onReady():
     print(f'logged in as {bot.user}')
 
+#Scans messages sent by users for banned words and if a banned word is found a warning message is sent
 @bot.event
-async def on_message(message): #Scans messages sent by users for banned words and if a banned word is found a warning message is sent
+async def on_message(message):
     if message.author == bot.user: #Prevents bot from responding to itself
         return
     
@@ -37,23 +38,44 @@ async def on_message(message): #Scans messages sent by users for banned words an
         if word in bannedWords:
             await message.channel.send(f'Erm "{word}" is a bad word, you cant say that.')
             await shameUser(message)
+            
     await bot.process_commands(message) #Allows bot to process commands still
 
 async def shameUser(message):
     member = message.author
-    badUser[f"{member}"] = message.content
+    if member.name in badUsers: 
+        badUsers[member.name].append(message.content)
+        
+    else:
+        badUsers[member.name] = [message.content]
+        
     try: 
         await member.edit(nick="Rude Man")
-        await message.channel.send(f'From {message.author}: "{message.content}"\nYour name is now Rude Man.')
+        await message.channel.send(f'From {member.mention}: "{message.content}"\nYour name is now Rude Man.')
+        
     except discord.Forbidden:
         await message.channel.send("Do not have permission to change user nickname.")
+        
     except discord.HTTPException:
         await message.channel.send("Changing nickname failed.")
-    
-#Defines the commands for the bot, Learned from ChatGpt
+        
+#Defines the hello command, when user calls $hello the bot will send a message saying Hello!   
 @bot.command()
-async def hello(ctx): #Defines the hello command, when user calls $hello the bot will send a message saying Hello!
+async def hello(ctx):
     await ctx.send('Hello!')
 
+#Defines the badPeople command, when users call this command it sends a message containing bad users from the badUsers dictionary 
+@bot.command()
+async def badPeople(ctx):
+    await ctx.send(badUsers)
+
+#Defines the findBadPeople command, when users call this command and supply a user it sends a message containing the user's flagged messages
+@bot.command()
+async def findBadPeople(ctx, member: discord.Member):
+    if member.name in badUsers.keys():
+        await ctx.send(f'{member.name}: {badUsers[member.name]}')
+    else:
+        await ctx.send(f'{member.name} is not a bad user.')
+        
 #Runs the bot
 bot.run(TOKEN)
