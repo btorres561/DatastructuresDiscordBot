@@ -51,9 +51,7 @@ class BinarySearchTree:
             #extract file and insert each word into bstFile
             with open('censored_words.txt', 'r') as file:
                 badWords = file.readlines()
-                print(badWords)
                 for word in badWords:
-                    print(word)
                     bstFile.insert(word.strip())
 
         #catch file not found exception
